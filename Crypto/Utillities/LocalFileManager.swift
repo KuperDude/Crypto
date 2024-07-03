@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-class LocalFileManager {
+actor LocalFileManager {
     
     static let instance = LocalFileManager()
     private init() { }

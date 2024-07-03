@@ -20,10 +20,10 @@ struct SearchBarView: View {
                         .theme.secondaryText : .theme.accent
                 )
             
-            TextField("Search by name or symbol...", text: $searchText)
+            TextField("Искать по названию...", text: $searchText)
                 .foregroundColor(.theme.accent)
                 .disableAutocorrection(true)
-                .keyboardType(.alphabet)
+                .keyboardType(.default)
                 .focused($focusedState)
                 .overlay(
                     Image(systemName: "xmark.circle.fill")
@@ -32,7 +32,7 @@ struct SearchBarView: View {
                         .foregroundColor(.theme.accent)
                         .opacity(searchText.isEmpty ? 0.0 : 1.0)
                         .onTapGesture {
-                            UIApplication.shared.endEditing()
+                            focusedState = false
                             searchText = ""
                         }
                     , alignment: .trailing

@@ -124,7 +124,7 @@ extension HomeView {
         }
         .listStyle(.plain)
         .refreshable {
-            vm.reloadData()
+            await vm.reloadData()
         }
     }
     

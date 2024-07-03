@@ -26,26 +26,43 @@ class CoinImageService {
     }
     
     private func getCoinImage() {
-        if let savedImage = fileManager.getImage(imageName: imageName, folderName: folderName) {
-            image = savedImage
-        } else {
-            downloadCoinImage()
+        Task {
+            if let savedImage = await fileManager.getImage(imageName: imageName, folderName: folderName) {
+                image = savedImage
+            } else {
+                try? await downloadCoinImage()
+            }
         }
     }
     
-    private func downloadCoinImage() {
+//    private func downloadCoinImage() {
+//        guard let url = URL(string: coin.image) else { return }
+//        
+//        imageSubscription = NetworkingManager.download(url: url)
+//            .tryMap({ data -> UIImage? in
+//                return UIImage(data: data)
+//            })
+//            .receive(on: DispatchQueue.main)
+//            .sink(receiveCompletion: NetworkingManager.handleCompletion) { [weak self] returnedImage in
+//                guard let self = self, let downloadImage = returnedImage else { return }
+//                self.image = downloadImage
+//                self.imageSubscription?.cancel()
+//                self.fileManager.saveImage(image: downloadImage, imageName: self.imageName, folderName: self.folderName)
+//            }
+//    }
+    
+    private func downloadCoinImage() async throws {
         guard let url = URL(string: coin.image) else { return }
         
-        imageSubscription = NetworkingManager.download(url: url)
-            .tryMap({ data -> UIImage? in
-                return UIImage(data: data)
-            })
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: NetworkingManager.handleCompletion) { [weak self] returnedImage in
-                guard let self = self, let downloadImage = returnedImage else { return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard let downloadImage = UIImage(data: data) else { return }
+            await self.fileManager.saveImage(image: downloadImage, imageName: self.imageName, folderName: self.folderName)
+            await MainActor.run {
                 self.image = downloadImage
-                self.imageSubscription?.cancel()
-                self.fileManager.saveImage(image: downloadImage, imageName: self.imageName, folderName: self.folderName)
             }
+        } catch let error {
+            throw error
+        }
     }
 }

@@ -77,10 +77,14 @@ class HomeViewModel: ObservableObject {
         portfolioDataService.updatePortfolio(coin: coin, amount: amount)
     }
     
-    func reloadData() {
-        coinDataService.getCoins()
-        marketDataService.getData()
-        HapticManager.notification(type: .success)
+    func reloadData() async {
+        do {
+            try await coinDataService.getCoins()
+            try await marketDataService.getData()
+            HapticManager.notification(type: .success)
+        } catch let error {
+            print("error")
+        }
     }
     
     private func filterAndSortCoins(text: String, coins: [CoinModel], sort: SortOption) -> [CoinModel] {

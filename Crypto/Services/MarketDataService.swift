@@ -15,18 +15,22 @@ class MarketDataService {
     private var marketDataSubscription: AnyCancellable?
     
     init() {
-        getData()
+        Task {
+            try await getData()
+        }
     }
     
-    func getData() {
+    func getData() async throws {
         guard let url = URL(string: "https://api.coingecko.com/api/v3/global") else { return }
         
-        marketDataSubscription = NetworkingManager.download(url: url)
-            .decode(type: GlobalData.self, decoder: JSONDecoder())
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: NetworkingManager.handleCompletion) { [weak self] returnedGlobalData in
-                self?.marketData = returnedGlobalData.data
-                self?.marketDataSubscription?.cancel()
-            }
+        
+        guard let data = try? await NetworkingManager.download(url: url) else { return }
+        
+        let globalData = try JSONDecoder().decode(GlobalData.self, from: data)
+        
+        await MainActor.run {
+            marketData = globalData.data
+        }
+        
     }
 }

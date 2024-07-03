@@ -10,10 +10,10 @@ import Combine
 
 class CoinImageViewModel: ObservableObject {
     
-    @Published var image: UIImage?
+    @MainActor @Published var image: UIImage?
     @Published var isLoading = false
     
-    private let coin: CoinModel
+    let coin: CoinModel
     private let dataService: CoinImageService
     private var cancellables = Set<AnyCancellable>()
     
@@ -25,13 +25,13 @@ class CoinImageViewModel: ObservableObject {
     }
     
     private func getImage() {
-        dataService.$image
-            .sink { [weak self] _ in
-                self?.isLoading = false
-            } receiveValue: { [weak self] returnedImage in
-                self?.image = returnedImage
+        Task {
+            for await returnedImage in dataService.$image.values {
+                await MainActor.run {
+                    self.image = returnedImage
+                }
+                break
             }
-            .store(in: &cancellables)
-
+        }
     }
 }
